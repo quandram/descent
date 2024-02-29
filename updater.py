@@ -1,4 +1,5 @@
 from gedcom.element.individual import IndividualElement
+from gedcom.element.element import Element
 from gedcom.parser import Parser
 import gedcom.tags
 
@@ -13,7 +14,32 @@ def print_child_elements(e):
         print_child_elements(ce)
 
 
+def fix_occupation(e):
+    for i in reversed(range(len(e.get_child_elements()))):
+        ec = e.get_child_elements()[i]
+        match ec.get_tag():
+            case 'TITL':
+                e.set_value(ec.get_value())
+                e.get_child_elements().remove(ec)
+            case _:
+                process_generic_level_2_elements(e, i)
+
+
+def process_generic_level_2_elements(ep, child_element_index):
+    e = ep.get_child_elements()[child_element_index]
+    match e.get_tag():
+        case 'FROM' | 'TO' | 'ORG' | 'DWEL' | 'LOCA' | 'TOWN' | 'CO' | 'ROAD' | 'CONT' | 'COUN' | 'PREF' | 'DIVO':
+            # unknown tag - needs handling
+            print("unknown tag")
+            a = Element(2,'A1','WOOT','VFT') #replace tag with something else
+            ep.get_child_elements()[child_element_index] = a
+
+
 def debug(e):
+    print(e.get_level())
+    print(e.get_pointer())
+    print(e.get_tag())
+    print(e.get_value())
     if e.surname_match('Longman'):
         # Unpack the name tuple
         (first, last) = e.get_name()
@@ -28,42 +54,36 @@ def debug(e):
         except (ValueError):
             print("Can't get parents of: " + name)
         print(name + ": " + parentsNames + " - " + occ)
-        # print_child_elements(element)
         for x in e.get_child_elements():
             if x.get_tag() == gedcom.tags.GEDCOM_TAG_OCCUPATION:
                 print_child_elements(x)
 
 
-def fix_occupation(e):
-    for ec in e.get_child_elements():
-        match ec.get_tag():
-            case 'TITL':
-                e.set_value(ec.get_value())
-                e.get_child_elements().remove(ec)
-            case _:
-                print(type(ec))
-                print(ec)
+# some search and replace is required to make the file readable by the parser
+# - @1@INDI -> @1@ INDI
+# - @F1@FAM -> @F1@ FAM
 
-
-# Initialize the parser
+# Initialize the parser and parse file
 gedcom_parser = Parser()
-
-# Parse your file
 gedcom_parser.parse_file(file_path)
+
 root_child_elements = gedcom_parser.get_root_child_elements()
 
-for e in root_child_elements:
-
+for i in reversed(range(len(root_child_elements))):
+    e = root_child_elements[i]
     if isinstance(e, IndividualElement):
         debug(e)
-
+        fixedElement = Element(0,'@I' + e.get_pointer()[1:-1] + '@', 'INDI', '')
+        fixedElement.get_child_elements().extend(e.get_child_elements())
         for ec in e.get_child_elements():
             match ec.get_tag():
                 case 'OCCU':
                     fix_occupation(ec)
                 case _:
                     print('no special handling')
+                    for i in reversed(range(len(ec.get_child_elements()))):
+                        process_generic_level_2_elements(ec, i)
+        root_child_elements[i] = fixedElement
 
 output_file = open(file_output_path, "w")
-# gedcom_parser.print_gedcom()
 gedcom_parser.save_gedcom(output_file)
