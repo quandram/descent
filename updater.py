@@ -4,8 +4,8 @@ from gedcom.parser import Parser
 import gedcom.tags
 
 # Path to your `.ged` file
-file_path = './data/DEV.GED'
-file_output_path = './data/DEV_OUTPUT.GED'
+source_file = './data/DEV_1_OUTPUT.GED'
+target_file = './data/DEV_2_OUTPUT.GED'
 
 
 def print_child_elements(e):
@@ -59,13 +59,9 @@ def debug(e):
                 print_child_elements(x)
 
 
-# some search and replace is required to make the file readable by the parser
-# - @1@INDI -> @1@ INDI
-# - @F1@FAM -> @F1@ FAM
-
 # Initialize the parser and parse file
 gedcom_parser = Parser()
-gedcom_parser.parse_file(file_path)
+gedcom_parser.parse_file(source_file)
 
 root_child_elements = gedcom_parser.get_root_child_elements()
 
@@ -85,5 +81,5 @@ for i in reversed(range(len(root_child_elements))):
                         process_generic_level_2_elements(ec, i)
         root_child_elements[i] = fixedElement
 
-output_file = open(file_output_path, "w")
+output_file = open(target_file, "w")
 gedcom_parser.save_gedcom(output_file)
