@@ -1,11 +1,13 @@
 from gedcom.element.individual import IndividualElement
+from gedcom.element.family import FamilyElement
 from gedcom.element.element import Element
 from gedcom.parser import Parser
 import gedcom.tags
+import re
 
 # Path to your `.ged` file
-source_file = './data/DEV_1_OUTPUT.GED'
-target_file = './data/DEV_2_OUTPUT.GED'
+source_file = './data/LONGMAN_1_OUTPUT.GED'
+target_file = './data/LONGMAN_2_OUTPUT.GED'
 
 
 def print_child_elements(e):
@@ -19,20 +21,45 @@ def fix_occupation(e):
         ec = e.get_child_elements()[i]
         match ec.get_tag():
             case 'TITL':
-                e.set_value(ec.get_value())
+                e.set_value(ec.get_value() + e.get_value())
                 e.get_child_elements().remove(ec)
+            case 'ORG':
+                e.set_value(e.get_value() + " @ " + ec.get_value())
+                e.get_child_elements().remove(ec)
+            case _:
+                process_generic_level_2_elements(e, i)
+
+
+def fix_residence(e):
+    for i in reversed(range(len(e.get_child_elements()))):
+        ec = e.get_child_elements()[i]
+        match ec.get_tag():
+            case 'DWEL':
+                e.get_child_elements()[i] = Element(2, '', 'ADDR',
+                                                    ec.get_value())
+            case 'ROAD':
+                e.get_child_elements()[i] = Element(2, '', 'ADDR',
+                                                    ec.get_value())
+            case 'TOWN':
+                e.get_child_elements()[i] = Element(2, '', 'PLAC',
+                                                    ec.get_value())
             case _:
                 process_generic_level_2_elements(e, i)
 
 
 def process_generic_level_2_elements(ep, child_element_index):
     e = ep.get_child_elements()[child_element_index]
+    global date_builder
     match e.get_tag():
-        case 'FROM' | 'TO' | 'ORG' | 'DWEL' | 'LOCA' | 'TOWN' | 'CO' | 'ROAD' | 'CONT' | 'COUN' | 'PREF' | 'DIVO':
+        case 'FROM':
+            date_builder = 'from ' + e.get_value() + date_builder
+            ep.get_child_elements().remove(e)
+        case 'TO':
+            date_builder = date_builder + ' to ' + e.get_value()
+            ep.get_child_elements().remove(e)
+        case 'LOCA' | 'CO' | 'PREF' | 'DIVO':
             # unknown tag - needs handling
-            print("unknown tag")
-            a = Element(2,'A1','WOOT','VFT') #replace tag with something else
-            ep.get_child_elements()[child_element_index] = a
+            print("unknown tag: " + e.get_tag())
 
 
 def debug(e):
@@ -64,22 +91,41 @@ gedcom_parser = Parser()
 gedcom_parser.parse_file(source_file)
 
 root_child_elements = gedcom_parser.get_root_child_elements()
-
 for i in reversed(range(len(root_child_elements))):
     e = root_child_elements[i]
     if isinstance(e, IndividualElement):
-        debug(e)
-        fixedElement = Element(0,'@I' + e.get_pointer()[1:-1] + '@', 'INDI', '')
+        # debug(e)
+        fixedElement = Element(0, '@I' + e.get_pointer()[1:-1] + '@', 'INDI',
+                               '')
         fixedElement.get_child_elements().extend(e.get_child_elements())
-        for ec in e.get_child_elements():
+        for j in reversed(range(len(e.get_child_elements()))):
+            ec = e.get_child_elements()[j]
+            global date_builder
+            date_builder = ''
             match ec.get_tag():
                 case 'OCCU':
                     fix_occupation(ec)
+                case 'RESI':
+                    fix_residence(ec)
                 case _:
                     print('no special handling')
-                    for i in reversed(range(len(ec.get_child_elements()))):
-                        process_generic_level_2_elements(ec, i)
+                    for k in reversed(range(len(ec.get_child_elements()))):
+                        process_generic_level_2_elements(ec, k)
+            if date_builder != '':
+                ec.add_child_element(Element(2, '', 'DATE', date_builder))
         root_child_elements[i] = fixedElement
-
+    if isinstance(e, FamilyElement):
+        for j in reversed(range(len(e.get_child_elements()))):
+            ec = e.get_child_elements()[j]
+            match ec.get_tag():
+                case 'HUSB':
+                    ec.set_value(re.sub("@(.+?)@", "@I\\1@",
+                                        ec.get_value()))
+                case 'WIFE':
+                    ec.set_value(re.sub("@(.+?)@", "@I\\1@",
+                                        ec.get_value()))
+                case 'CHIL':
+                    ec.set_value(re.sub("@(.+?)@", "@I\\1@",
+                                        ec.get_value()))
 output_file = open(target_file, "w")
 gedcom_parser.save_gedcom(output_file)
