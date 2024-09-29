@@ -134,6 +134,11 @@ def process_generic_level_2_elements(ep, child_element_index):
         case 'PREF':
             # unknown tag - needs handling
             print("unknown tag: " + e.get_tag())
+        case 'CONT':
+            if len(e.get_value()) == 0:
+                ep.get_child_elements().remove(e)
+        case _:
+            e.set_value(e.get_value().strip())
 
 
 def debug(e):
