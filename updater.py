@@ -137,11 +137,11 @@ def process_generic_level_2_elements(ep, child_element_index):
                                          'STAE', e.get_value()))
             ep.get_child_elements().remove(e)
         case 'PLAC':
-            string_builder = e.get_value()
-            for i in e.get_child_elements():
-                string_builder += ' | ' + i.get_value()
+            string_builder = ''
+            for i in reversed(e.get_child_elements()):
+                string_builder = ' | ' + i.get_value() + string_builder
                 e.get_child_elements().remove(i)
-            e.set_value(string_builder)
+            e.set_value(e.get_value() + string_builder)
         case 'PREF':
             # unknown tag - needs handling
             print("unknown tag: " + e.get_tag())
