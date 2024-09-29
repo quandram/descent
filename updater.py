@@ -42,20 +42,44 @@ def fix_occupation(e):
 
 
 def fix_residence(e):
+    adr_elements = []
+    address = []
     for i in reversed(range(len(e.get_child_elements()))):
         ec = e.get_child_elements()[i]
         match ec.get_tag():
             case 'DWEL':
-                e.get_child_elements()[i] = Element(2, '', 'ADDR',
-                                                    ec.get_value())
+                adr_elements.append(ec.get_value())
+                e.get_child_elements().remove(ec)
             case 'ROAD':
-                e.get_child_elements()[i] = Element(2, '', 'ADDR',
-                                                    ec.get_value())
+                adr_elements.append(ec.get_value())
+                e.get_child_elements().remove(ec)
+            case 'LOCA':
+                adr_elements.append(ec.get_value())
+                e.get_child_elements().remove(ec)
             case 'TOWN':
-                e.get_child_elements()[i] = Element(2, '', 'PLAC',
-                                                    ec.get_value())
+                address.append((Element(e.get_level() + 2, '',
+                                        'CITY', ec.get_value())))
+                e.get_child_elements().remove(ec)
+            case 'CO':
+                address.append(Element(e.get_level() + 2, '', 'STAE',
+                                       ec.get_value()))
+                e.get_child_elements().remove(ec)
+            case 'POST':
+                address.append(Element(e.get_level() + 2, '', 'POST',
+                                       ec.get_value()))
+                e.get_child_elements().remove(ec)
             case _:
                 process_generic_level_2_elements(e, i)
+    if len(adr_elements) > 0:
+        addr = Element(e.get_level() + 1, '', 'ADDR', adr_elements[len(adr_elements) - 1])
+    else:
+        addr = Element(e.get_level() + 1, '', 'ADDR', '')
+    for i in reversed(range(len(adr_elements) - 1)):
+        addr.add_child_element(Element(addr.get_level() + 1, '',
+                                       'ADR' + str(len(adr_elements) - i), adr_elements[i]))
+    for x in reversed(address):
+        addr.add_child_element(x)
+    e.add_child_element(addr)
 
 
 def process_generic_level_2_elements(ep, child_element_index):
@@ -73,6 +97,10 @@ def process_generic_level_2_elements(ep, child_element_index):
             ep.get_child_elements().remove(e)
         case 'TO':
             date_builder = date_builder + ' to ' + e.get_value()
+            ep.get_child_elements().remove(e)
+        case 'CO':
+            ep.add_child_element(Element(3, e.get_pointer(),
+                                         'STAE', e.get_value()))
             ep.get_child_elements().remove(e)
         case 'LOCA' | 'CO' | 'PREF' | 'DIVO':
             # unknown tag - needs handling
