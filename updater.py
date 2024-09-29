@@ -73,7 +73,8 @@ def fix_residence(e):
     if len(adr_elements) > 0:
         addr = Element(e.get_level() + 1, '', 'ADDR', adr_elements[len(adr_elements) - 1])
     else:
-        addr = Element(e.get_level() + 1, '', 'ADDR', '')
+        # Need something so...
+        addr = Element(e.get_level() + 1, '', 'ADDR', address[len(address) -1].get_value())
     for i in reversed(range(len(adr_elements) - 1)):
         addr.add_child_element(Element(addr.get_level() + 1, '',
                                        'ADR' + str(len(adr_elements) - i), adr_elements[i]))
