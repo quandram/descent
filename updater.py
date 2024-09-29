@@ -16,6 +16,17 @@ def print_child_elements(e):
         print_child_elements(ce)
 
 
+def fix_nickname(e, ep):
+    nick = ''
+    for i in reversed(range(len(ep.get_child_elements()))):
+        ec = ep.get_child_elements()[i]
+        match ec.get_tag():
+            case 'NICK':
+                nick = ec.get_value()
+    if nick != '':
+        e.add_child_element(Element(2, '', 'NICK', nick))
+
+
 def fix_occupation(e):
     for i in reversed(range(len(e.get_child_elements()))):
         ec = e.get_child_elements()[i]
@@ -103,12 +114,15 @@ for i in reversed(range(len(root_child_elements))):
             global date_builder
             date_builder = ''
             match ec.get_tag():
+                case 'NAME':
+                    fix_nickname(ec, e)
+                case 'NICK':
+                    fixedElement.get_child_elements().remove(ec)
                 case 'OCCU':
                     fix_occupation(ec)
                 case 'RESI':
                     fix_residence(ec)
                 case _:
-                    print('no special handling')
                     for k in reversed(range(len(ec.get_child_elements()))):
                         process_generic_level_2_elements(ec, k)
             if date_builder != '':
