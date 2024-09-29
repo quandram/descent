@@ -63,7 +63,13 @@ def process_generic_level_2_elements(ep, child_element_index):
     global date_builder
     match e.get_tag():
         case 'FROM':
-            date_builder = 'from ' + e.get_value() + date_builder
+            # Assumes FROM comes before TO
+            from_prefix = ''
+            if e.get_value().startswith('ABT'):
+                from_prefix = ''
+            else:
+                from_prefix = 'from '
+            date_builder = from_prefix + e.get_value() + date_builder
             ep.get_child_elements().remove(e)
         case 'TO':
             date_builder = date_builder + ' to ' + e.get_value()
