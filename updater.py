@@ -175,5 +175,10 @@ for i in reversed(range(len(root_child_elements))):
                 case 'CHIL':
                     ec.set_value(re.sub("@(.+?)@", "@I\\1@",
                                         ec.get_value()))
+                case 'DIVO':
+                    div = Element(ec.get_level(), '', 'DIV', '')
+                    div.get_child_elements().extend(ec.get_child_elements())
+                    e.add_child_element(div)
+                    e.get_child_elements().remove(ec)
 output_file = open(target_file, "w")
 gedcom_parser.save_gedcom(output_file)
