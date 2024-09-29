@@ -71,13 +71,16 @@ def fix_residence(e):
             case _:
                 process_generic_level_2_elements(e, i)
     if len(adr_elements) > 0:
-        addr = Element(e.get_level() + 1, '', 'ADDR', adr_elements[len(adr_elements) - 1])
+        addr = Element(e.get_level() + 1, '', 'ADDR',
+                       adr_elements[len(adr_elements) - 1])
     else:
         # Need something so...
-        addr = Element(e.get_level() + 1, '', 'ADDR', address[len(address) -1].get_value())
+        addr = Element(e.get_level() + 1, '', 'ADDR',
+                       address[len(address) - 1].get_value())
     for i in reversed(range(len(adr_elements) - 1)):
         addr.add_child_element(Element(addr.get_level() + 1, '',
-                                       'ADR' + str(len(adr_elements) - i), adr_elements[i]))
+                                       'ADR' + str(len(adr_elements) - i),
+                                       adr_elements[i]))
     for x in reversed(address):
         addr.add_child_element(x)
     e.add_child_element(addr)
@@ -103,7 +106,13 @@ def process_generic_level_2_elements(ep, child_element_index):
             ep.add_child_element(Element(3, e.get_pointer(),
                                          'STAE', e.get_value()))
             ep.get_child_elements().remove(e)
-        case 'LOCA' | 'CO' | 'PREF' | 'DIVO':
+        case 'PLAC':
+            string_builder = e.get_value()
+            for i in e.get_child_elements():
+                string_builder += ' | ' + i.get_value()
+                e.get_child_elements().remove(i)
+            e.set_value(string_builder)
+        case 'PREF':
             # unknown tag - needs handling
             print("unknown tag: " + e.get_tag())
 
