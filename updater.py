@@ -16,6 +16,21 @@ def print_child_elements(e):
         print_child_elements(ce)
 
 
+def get_quarter_date(text):
+    year = text[3:7]
+    match text[1:2]:
+        case '1':
+            return 'BET JAN ' + year + ' AND MAR ' + year
+        case '2':
+            return 'BET APR ' + year + ' AND JUN ' + year
+        case '3':
+            return 'BET JUL ' + year + ' AND SEP ' + year
+        case '4':
+            return 'BET OCT ' + year + ' AND DEC ' + year
+        case _:
+            print('BORKED')
+
+
 def fix_nickname(e, ep):
     nick = ''
     for i in reversed(range(len(ep.get_child_elements()))):
@@ -39,6 +54,7 @@ def fix_occupation(e):
                 e.get_child_elements().remove(ec)
             case _:
                 process_generic_level_2_elements(e, i)
+    e.set_value(e.get_value().strip())
 
 
 def fix_residence(e):
@@ -90,6 +106,9 @@ def process_generic_level_2_elements(ep, child_element_index):
     e = ep.get_child_elements()[child_element_index]
     global date_builder
     match e.get_tag():
+        case 'DATE':
+            if e.get_value().startswith('Q'):
+                e.set_value(get_quarter_date(e.get_value()))
         case 'FROM':
             # Assumes FROM comes before TO
             from_prefix = ''
@@ -163,14 +182,15 @@ for i in reversed(range(len(root_child_elements))):
                 case 'NICK':
                     fixedElement.get_child_elements().remove(ec)
                 case 'OCCU':
-                    fix_occupation(ec)
+                    fix_occupation(ec) 
                 case 'RESI':
                     fix_residence(ec)
                 case _:
                     for k in reversed(range(len(ec.get_child_elements()))):
                         process_generic_level_2_elements(ec, k)
             if date_builder != '':
-                ec.add_child_element(Element(2, '', 'DATE', date_builder))
+                ec.add_child_element(Element(2, '', 'DATE',
+                                             date_builder.strip()))
         root_child_elements[i] = fixedElement
     if isinstance(e, FamilyElement):
         for j in reversed(range(len(e.get_child_elements()))):
@@ -190,5 +210,8 @@ for i in reversed(range(len(root_child_elements))):
                     div.get_child_elements().extend(ec.get_child_elements())
                     e.add_child_element(div)
                     e.get_child_elements().remove(ec)
+                case _:
+                    for k in reversed(range(len(ec.get_child_elements()))):
+                        process_generic_level_2_elements(ec, k)
 output_file = open(target_file, "w")
 gedcom_parser.save_gedcom(output_file)
