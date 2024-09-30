@@ -120,7 +120,12 @@ def process_generic_level_2_elements(ep, child_element_index):
             date_builder = from_prefix + e.get_value() + date_builder
             ep.get_child_elements().remove(e)
         case 'TO':
-            date_builder = date_builder + ' to ' + e.get_value()
+            to_prefix = ''
+            if e.get_value().startswith('ABT'):
+                to_prefix = ''
+            else:
+                to_prefix = ' to ' + e.get_value()
+            date_builder = date_builder + to_prefix
             ep.get_child_elements().remove(e)
         case 'CO':
             ep.add_child_element(Element(3, e.get_pointer(),
@@ -188,7 +193,7 @@ for i in reversed(range(len(root_child_elements))):
                 case 'NICK':
                     fixedElement.get_child_elements().remove(ec)
                 case 'OCCU':
-                    fix_occupation(ec) 
+                    fix_occupation(ec)
                 case 'RESI':
                     fix_residence(ec)
                 case 'POST':
@@ -199,6 +204,11 @@ for i in reversed(range(len(root_child_elements))):
                     for k in reversed(range(len(ec.get_child_elements()))):
                         process_generic_level_2_elements(ec, k)
             if date_builder != '':
+                if (date_builder.startswith('ABT') and
+                        date_builder[3:].find(' to ') > 0):
+                    to_loc = date_builder.find(' to ')
+                    date_builder = 'BET' + date_builder[3:to_loc] \
+                        + ' and ' + date_builder[to_loc + 4:]
                 ec.add_child_element(Element(2, '', 'DATE',
                                              date_builder.strip()))
         root_child_elements[i] = fixedElement
