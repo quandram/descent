@@ -70,7 +70,6 @@ def fix_occupation(e):
 
 def fix_residence(e):
     adr_elements = []
-    address = []
     for i in reversed(range(len(e.get_child_elements()))):
         ec = e.get_child_elements()[i]
         match ec.get_tag():
@@ -84,32 +83,23 @@ def fix_residence(e):
                 adr_elements.append(ec.get_value())
                 e.get_child_elements().remove(ec)
             case 'TOWN':
-                address.append((Element(e.get_level() + 2, '',
-                                        'CITY', ec.get_value())))
+                adr_elements.append(ec.get_value())
                 e.get_child_elements().remove(ec)
             case 'CO':
-                address.append(Element(e.get_level() + 2, '', 'STAE',
-                                       ec.get_value()))
+                adr_elements.append(ec.get_value())
                 e.get_child_elements().remove(ec)
             case 'POST':
-                address.append(Element(e.get_level() + 2, '', 'POST',
-                                       ec.get_value()))
+                adr_elements.append(ec.get_value())
                 e.get_child_elements().remove(ec)
+            case 'PLAC':
+                print('oh dear')
+                # Should not have one of these
             case _:
                 process_generic_level_2_elements(e, i)
-    if len(adr_elements) > 0:
-        addr = Element(e.get_level() + 1, '', 'ADDR',
-                       adr_elements[len(adr_elements) - 1])
-    else:
-        # Need something so...
-        addr = Element(e.get_level() + 1, '', 'ADDR',
-                       address[len(address) - 1].get_value())
-    for i in reversed(range(len(adr_elements) - 1)):
-        addr.add_child_element(Element(addr.get_level() + 1, '',
-                                       'ADR' + str(len(adr_elements) - i),
-                                       adr_elements[i]))
-    for x in reversed(address):
-        addr.add_child_element(x)
+
+    addr = Element(e.get_level() + 1, '', 'PLAC',
+                   " ".join(reversed(adr_elements)))
+
     e.add_child_element(addr)
 
 
