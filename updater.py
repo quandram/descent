@@ -4,10 +4,14 @@ from gedcom.element.element import Element
 from gedcom.parser import Parser
 import gedcom.tags
 import re
+from argparse import ArgumentParser
 
-# Path to your `.ged` file
-source_file = './data/LONGMAN_1_OUTPUT.GED'
-target_file = './data/LONGMAN_2_OUTPUT.GED'
+parser = ArgumentParser()
+parser.add_argument("-s", "--sourceFile",
+                    dest="source_file", help="source filename")
+parser.add_argument("-t", "--targetFile",
+                    dest="target_file", help="target filename")
+args = parser.parse_args()
 
 
 def print_child_elements(e):
@@ -152,7 +156,7 @@ def debug(e):
     print(e.get_pointer())
     print(e.get_tag())
     print(e.get_value())
-    if e.surname_match('Longman'):
+    if e.surname_match(''):  # Add surname to get more data from some records
         # Unpack the name tuple
         (first, last) = e.get_name()
         occ = e.get_occupation()
@@ -173,7 +177,7 @@ def debug(e):
 
 # Initialize the parser and parse file
 gedcom_parser = Parser()
-gedcom_parser.parse_file(source_file)
+gedcom_parser.parse_file(args.source_file)
 
 root_child_elements = gedcom_parser.get_root_child_elements()
 for i in reversed(range(len(root_child_elements))):
@@ -233,5 +237,5 @@ for i in reversed(range(len(root_child_elements))):
                 case _:
                     for k in reversed(range(len(ec.get_child_elements()))):
                         process_generic_level_2_elements(ec, k)
-output_file = open(target_file, "w")
+output_file = open(args.target_file, "w")
 gedcom_parser.save_gedcom(output_file)

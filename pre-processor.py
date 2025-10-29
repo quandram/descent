@@ -1,12 +1,16 @@
 import re
 import shutil
+from argparse import ArgumentParser
 
-# Path to your `.ged` file
-source_file = './data/LONGMAN.GED'
-target_file = './data/LONGMAN_1_OUTPUT.GED'
+parser = ArgumentParser()
+parser.add_argument("-s", "--sourceFile",
+                    dest="source_file", help="source filename")
+parser.add_argument("-t", "--targetFile",
+                    dest="target_file", help="target filename")
+args = parser.parse_args()
 
 # work on a copy of the file to preserve the souce
-shutil.copy(source_file, target_file)
+shutil.copy(args.source_file, args.target_file)
 
 
 def pre_process_line(line):
@@ -45,7 +49,7 @@ def pre_process_line(line):
 
 
 # some search and replace is required to make the file readable by the parser
-with open(target_file, "r+") as f:
+with open(args.target_file, "r+") as f:
     lines = f.readlines()
     f.seek(0)
     f.truncate()
