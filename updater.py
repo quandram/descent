@@ -58,6 +58,7 @@ def fix_name(e, ep):
 
 
 def fix_occupation(e):
+    org = ""
     for i in reversed(range(len(e.get_child_elements()))):
         ec = e.get_child_elements()[i]
         match ec.get_tag():
@@ -65,8 +66,10 @@ def fix_occupation(e):
                 e.set_value(ec.get_value() + e.get_value())
                 e.get_child_elements().remove(ec)
             case 'ORG':
-                e.set_value(e.get_value() + " @ " + ec.get_value())
+                org = ec.get_value() + ", "
                 e.get_child_elements().remove(ec)
+            case 'PLAC':
+                ec.set_value(org + ec.get_value().strip())
             case _:
                 process_generic_level_2_elements(e, i)
     e.set_value(e.get_value().strip())
