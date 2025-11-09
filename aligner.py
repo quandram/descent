@@ -21,12 +21,56 @@ def elementSort(e):
     return e.get_tag()
 
 
-def adjust_value(e):
+def process_element(e):
+    if e.get_pointer() != "":
+        print(e.get_pointer())
+        fixedElement = Element(e.get_level(),
+                               e.get_pointer()[0:2] +
+                               "{:04d}".format(int(e.get_pointer()[2:-1])) +
+                               '@', e.get_tag(), '')
+        fixedElement.get_child_elements().extend(e.get_child_elements())
+    else:
+        fixedElement = e
+    ec = fixedElement.get_child_elements()
+    for j in reversed(range(len(ec))):
+        c = ec[j]
+        adjust_element(c, fixedElement)
+    if args.should_alphabetise:
+        ec.sort(key=elementSort)
+    return fixedElement
+
+
+def adjust_element(e, ep):
+    is_deleted = False
     match e.get_tag():
         case 'DATE':
-            return e.get_value().upper()
+            date_parts = e.get_value().split(' ')
+            for i in range(len(date_parts)):
+                if len(date_parts[i]) == 1 and date_parts[i].isdigit():
+                    date_parts[i] = "0" + date_parts[i]
+            e.set_value(" ".join(date_parts).upper())
+        case 'NAME':
+            name_parts = e.get_value().split('/')
+            if len(name_parts) > 1:
+                name_parts[1] = name_parts[1].capitalize()
+                post_spacing = ""
+                if name_parts[2] != "":
+                    post_spacing = " "
+                e.set_value(name_parts[0] + ' /' +
+                            name_parts[1] + '/' + post_spacing + name_parts[2])
+        case 'GIVN':  # In Scion - not in Pedigree or Gramps
+            ep.get_child_elements().remove(e)
+            is_deleted = True
+        case 'SURN':  # In Scion - not in Pedigree or Gramps
+            ep.get_child_elements().remove(e)
+            is_deleted = True
+        case 'REFN':  # Random Scion reference
+            ep.get_child_elements().remove(e)
+            is_deleted = True
         case _:
-            return e.get_value()
+            e.set_value(e.get_value().strip())
+    if is_deleted is False:
+        process_element(e)
 
 
 # Initialize the parser and parse file
@@ -37,22 +81,9 @@ l0_elements = gedcom_parser.get_root_child_elements()
 # root_child_elements.sort(key=elementSort)
 
 for i in reversed(range(len(l0_elements))):
-    e = l0_elements[i]
-    if isinstance(e, IndividualElement):
-        l1_elements = e.get_child_elements()
-        for j in reversed(range(len(l1_elements))):
-            l1 = l1_elements[j]
-            l1_elements[j].set_value(adjust_value(l1_elements[j]))
-            l2_elements = l1.get_child_elements()
-            for k in reversed(range(len(l2_elements))):
-                l2 = l2_elements[k]
-                l2_elements[k].set_value(adjust_value(l2))
-            if args.should_alphabetise:
-                l2_elements.sort(key=elementSort)
-            l1_elements[j].child_elements = l2_elements
-        if args.should_alphabetise:
-            l1_elements.sort(key=elementSort)
-        l0_elements[i].child_elements = l1_elements
+    if isinstance(l0_elements[i], IndividualElement):
+        l0_elements[i] = process_element(l0_elements[i])
+
 
 output_file = open(args.target_file, "w")
 gedcom_parser.save_gedcom(output_file)
