@@ -101,7 +101,8 @@ def fix_residence(e):
             case 'PLAC':
                 adr_elements.append(ec.get_value() + ',')
                 e.get_child_elements().remove(ec)
-                # Should not have one of these from PEDIGREE but added for SCION
+                # Should not have one of these from PEDIGREE
+                # Scion has it, removing and re-adding easiest for comparison
             case _:
                 process_generic_level_2_elements(e, i)
 

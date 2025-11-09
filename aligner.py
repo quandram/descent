@@ -40,15 +40,17 @@ def adjust_element(e, ep):
     is_deleted = False
     match e.get_tag():
         case 'DATE':
+            # pad day values to 2 digits
+            # upper case month values
             date_parts = e.get_value().split(' ')
             for i in range(len(date_parts)):
                 if len(date_parts[i]) == 1 and date_parts[i].isdigit():
                     date_parts[i] = "0" + date_parts[i]
             e.set_value(" ".join(date_parts).upper())
         case 'NAME':
+            # Fix forced upper case surname SCION did
             name_parts = e.get_value().split('/')
             if len(name_parts) > 1:
-                # Fix capitalization SCION did
                 name_parts[1] = name_parts[1].capitalize()
                 post_spacing = ""
                 if name_parts[2] != "":
@@ -61,13 +63,14 @@ def adjust_element(e, ep):
         case 'SURN':  # In Scion - not in Pedigree or Gramps
             ep.get_child_elements().remove(e)
             is_deleted = True
-        case 'REFN':  # Random Scion reference
+        case 'REFN':  # Unnecessary Scion reference
             ep.get_child_elements().remove(e)
             is_deleted = True
-        case 'PEDI':
+        case 'PEDI':  # Unnecessary
             ep.get_child_elements().remove(e)
             is_deleted = True
         case 'NOTE':
+            # Retrieve NOTE content from footer
             if e.get_value()[0:1] == '@' and e.get_value()[-1]:
                 for i in range(len(l0_elements)):
                     note_ref = l0_elements[i]
@@ -91,9 +94,9 @@ gedcom_parser.parse_file(args.source_file)
 l0_elements = gedcom_parser.get_root_child_elements()
 
 for i in reversed(range(len(l0_elements))):
-    #    if isinstance(l0_elements[i], IndividualElement):
-    l0_elements[i] = process_element(
-        l0_elements[i], isinstance(l0_elements[i], IndividualElement))
+    # l0_elements[i] = process_element(
+    #    l0_elements[i], isinstance(l0_elements[i], IndividualElement))
+    l0_elements[i] = process_element(l0_elements[i])
 
 # Strip referenced note elements after processing
 for i in reversed(range(len(l0_elements))):
