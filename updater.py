@@ -84,19 +84,19 @@ def fix_residence(e):
                 adr_elements.append(ec.get_value())
                 e.get_child_elements().remove(ec)
             case 'ROAD':
-                adr_elements.append(ec.get_value())
+                adr_elements.append(ec.get_value() + ',')
                 e.get_child_elements().remove(ec)
             case 'LOCA':
-                adr_elements.append(ec.get_value())
+                adr_elements.append(ec.get_value() + ',')
                 e.get_child_elements().remove(ec)
             case 'TOWN':
-                adr_elements.append(ec.get_value())
+                adr_elements.append(ec.get_value() + ',')
                 e.get_child_elements().remove(ec)
             case 'CO':
-                adr_elements.append(ec.get_value())
+                adr_elements.append(ec.get_value() + ',')
                 e.get_child_elements().remove(ec)
             case 'POST':
-                adr_elements.append(ec.get_value())
+                adr_elements.append(ec.get_value() + ',')
                 e.get_child_elements().remove(ec)
             case 'PLAC':
                 print('oh dear')
