@@ -48,8 +48,10 @@ def adjust_element(e, ep):
                     date_parts[i] = "0" + date_parts[i]
             e.set_value(" ".join(date_parts).upper())
         case 'NAME':
+            # Remove "Nickname" on main Name element
+            name_parts = e.get_value().split('"')
             # Fix forced upper case surname SCION did
-            name_parts = e.get_value().split('/')
+            name_parts = name_parts[0].split('/')
             if len(name_parts) > 1:
                 name_parts[1] = name_parts[1].capitalize()
                 post_spacing = ""
@@ -82,7 +84,7 @@ def adjust_element(e, ep):
                                 e.new_child_element(
                                     note_child.get_tag(), "", note_child.get_value())
         case _:
-            e.set_value(e.get_value().strip())
+            e.set_value(e.get_value())
     if is_deleted is False:
         process_element(e)
 
