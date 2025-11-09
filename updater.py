@@ -99,13 +99,14 @@ def fix_residence(e):
                 adr_elements.append(ec.get_value() + ',')
                 e.get_child_elements().remove(ec)
             case 'PLAC':
-                print('oh dear')
-                # Should not have one of these
+                adr_elements.append(ec.get_value() + ',')
+                e.get_child_elements().remove(ec)
+                # Should not have one of these from PEDIGREE but added for SCION
             case _:
                 process_generic_level_2_elements(e, i)
 
     addr = Element(e.get_level() + 1, '', 'PLAC',
-                   " ".join(reversed(adr_elements)))
+                   " ".join(reversed(adr_elements))[:-1])
 
     e.add_child_element(addr)
 
@@ -150,6 +151,9 @@ def process_generic_level_2_elements(ep, child_element_index):
         case 'CONT':
             if len(e.get_value()) == 0:
                 ep.get_child_elements().remove(e)
+        case '_EVENTDETAIL':
+            fixup = Element(2, '', 'NOTE', e.get_value())
+            ep.get_child_elements()[child_element_index] = fixup
         case _:
             e.set_value(e.get_value().strip())
 
@@ -240,5 +244,6 @@ for i in reversed(range(len(root_child_elements))):
                 case _:
                     for k in reversed(range(len(ec.get_child_elements()))):
                         process_generic_level_2_elements(ec, k)
+
 output_file = open(args.target_file, "w")
 gedcom_parser.save_gedcom(output_file)
